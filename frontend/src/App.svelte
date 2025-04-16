@@ -1,5 +1,5 @@
 <script lang="ts">
-    const SEARXNG_URL = "http://localhost:8000/";
+    const BACKEND_URL = "http://localhost:9000/";
     import SearchResult from "./lib/SearchResult.svelte";
     let query = "";
     let submitted = false;
@@ -16,10 +16,9 @@
 
     function buildQueryURL(query: string) {
         const processedQuery = encodeURIComponent(query);
-        const querySegment = `search?q=${processedQuery}&format=json`;
-        return SEARXNG_URL + querySegment;
+        const querySegment = `search?q=${processedQuery}`;
+        return BACKEND_URL + querySegment;
     }
-
     async function handleSearch(e: Event) {
         e.preventDefault();
         if (query.trim() !== "") {
