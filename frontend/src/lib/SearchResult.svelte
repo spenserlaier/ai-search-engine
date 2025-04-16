@@ -2,6 +2,22 @@
     export let title: string;
     export let url: string;
     export let snippet: string;
+    export let query: string;
+    export let analyzing = false;
+    export let analysis = null;
+    const SEARXNG_URL = "localhost:8000/";
+
+    async function analyze() {
+        analyzing = true;
+        const res = await fetch(SEARXNG_URL + "analyze", {
+            method: "POST",
+            body: JSON.stringify({
+                url: url,
+                query: query,
+                headers: { "Content-Type": "application/json" },
+            }),
+        });
+    }
 </script>
 
 <article class="search-result">
@@ -10,6 +26,14 @@
     </h2>
     <p class="snippet">{snippet}</p>
     <small class="url">{url}</small>
+    <button on:click={analyze} disabled={analyzing}
+        >{analyzing ? "Generating Analysis..." : "Analyze Relevance"}</button
+    >
+    {#if analysis}
+        <div class="analysis">
+            <p>{analysis}</p>
+        </div>
+    {/if}
 </article>
 
 <style>

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from searxng_client import search_searxng
-from ollama_client import analyze_results
-from models import SearchResult, SearchResponse
+from ollama_client import analyze_results, analyze_article
+from models import SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
 
 router = APIRouter()
 
@@ -20,4 +20,8 @@ async def search(query: str = Query(..., min_length=1)):
         results=parsed_results,
         analysis=analysis
     )
+@router.post("/analyze", response_model=AnalysisResponse)
+async def analyze(request: AnalysisRequest):
+    result = await analyze_article(request.url, request.query)
+    return {"snippet": result}
 

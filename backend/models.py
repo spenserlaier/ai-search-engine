@@ -10,3 +10,10 @@ class SearchResponse(BaseModel):
     query: str
     results: List[SearchResult]
     analysis: str
+
+class AnalysisRequest(BaseModel):
+    url: str
+    query: str
+
+class AnalysisResponse(BaseModel):
+    snippet: str
