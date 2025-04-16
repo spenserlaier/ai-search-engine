@@ -16,4 +16,4 @@ class AnalysisRequest(BaseModel):
     query: str
 
 class AnalysisResponse(BaseModel):
-    snippet: str
+    analysis: str

@@ -1,22 +1,27 @@
 <script lang="ts">
     export let title: string;
     export let url: string;
-    export let snippet: string;
     export let query: string;
-    export let analyzing = false;
-    export let analysis = null;
-    const SEARXNG_URL = "localhost:8000/";
-
+    export let snippet: string;
+    export let BACKEND_URL: string;
+    let analyzing = false;
+    type Analysis = {
+        analysis: string;
+    };
+    export let analysis: string | null = null;
     async function analyze() {
         analyzing = true;
-        const res = await fetch(SEARXNG_URL + "analyze", {
+        const res = await fetch(BACKEND_URL + "analyze", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                url: url,
+                url: encodeURI(url),
                 query: query,
-                headers: { "Content-Type": "application/json" },
             }),
         });
+        const json: Analysis = await res.json();
+        analysis = json.analysis;
+        console.log(analysis);
     }
 </script>
 
@@ -31,7 +36,7 @@
     >
     {#if analysis}
         <div class="analysis">
-            <p>{analysis}</p>
+            {analysis}
         </div>
     {/if}
 </article>

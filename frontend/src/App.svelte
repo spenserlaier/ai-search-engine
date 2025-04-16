@@ -70,6 +70,8 @@
                             title={result.title}
                             url={result.url}
                             snippet={result.content}
+                            {BACKEND_URL}
+                            {query}
                         />
                     {/each}
                 {/if}

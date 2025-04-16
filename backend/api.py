@@ -22,6 +22,8 @@ async def search(query: str = Query(..., min_length=1)):
     )
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze(request: AnalysisRequest):
-    result = await analyze_article(request.url, request.query)
-    return {"snippet": result}
+    print("received analysis request: ", request)
+    response = await analyze_article(request.url, request.query)
+    print("generated analysis response: ", response)
+    return AnalysisResponse(analysis=response)
 

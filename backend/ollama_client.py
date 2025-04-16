@@ -2,12 +2,15 @@ import http_client
 from readability import Document
 import httpx
 from bs4 import BeautifulSoup
+import json
 
 OLLAMA_URL = "http://localhost:11434"
+OLLAMA_MODEL = "gemma3:4b"
 
 async def generate_model_response(prompt, stream=False):
+    print('attempting to generate model response')
     response = await http_client.get_client().post(f"{OLLAMA_URL}/api/generate", json={
-        "model": "gemma",
+        "model": OLLAMA_MODEL,
         "prompt": prompt,
         "stream": stream
         })
@@ -21,19 +24,47 @@ async def analyze_results(query: str, results: list):
     return response
 
 async def extract_article_text(url: str) -> str:
-    response = await httpx.AsyncClient().get(url, timeout=10)
-    response.raise_for_status()
+    print("extracting article text from url: ", url)
+    try:
+        response = await httpx.AsyncClient().get(url, timeout=10, follow_redirects=False)
+        # redirects get messy on certain websites, might need special procedures to handle them
+        response.raise_for_status()
+        print("got extracted response: ", response)
 
-    doc = Document(response.text)
-    summary_html = doc.summary()
+        doc = Document(response.text)
+        summary_html = doc.summary()
 
-    soup = BeautifulSoup(summary_html, "html.parser")
-    text = soup.get_text()
-    return text.strip()
-
+        soup = BeautifulSoup(summary_html, "html.parser")
+        text = soup.get_text()
+        return text.strip()
+    except Exception:
+        return ""
 
 async def analyze_article(url: str, query: str):
-    article_text = extract_article_text(url)
-    prompt = f'Given the following query: {query}, probe the provided article text for a relevant snippet that helps to answer the query. You may also provide additional context which helps to explain the relevance of the query, insofar as it clarifies or expands upon the relevant snippet. Return your response in the following format:  {{"snippet":"<snippet>", "relevance": "<relevance>"}}. Here is the article text: {article_text}'
-    response = await generate_model_response(prompt)
-    return response
+    article_text = await extract_article_text(url)
+    print(article_text)
+    if article_text != None and article_text != "":
+        prompt = f"""
+You are an assistant that analyzes articles in relation to a user query.
+
+Your task:
+- Read the article below.
+- Identify the most relevant snippet that addresses the query.
+- Briefly explain why the snippet is relevant.
+
+Format your response like this (no extra commentary):
+Snippet: <the relevant sentence or passage>
+Relevance: <a short explanation of how it answers or relates to the query>
+
+Do not include anything outside of these two labeled lines.
+
+Query: {query}
+
+Article:
+{article_text}
+"""
+        response = await generate_model_response(prompt)
+        print("received response: ", response)
+        return response
+    else:
+        return "analysis unavailable for this article"
