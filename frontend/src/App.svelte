@@ -16,7 +16,7 @@
 
     function buildQueryURL(query: string) {
         const processedQuery = encodeURIComponent(query);
-        const querySegment = `search?q=${processedQuery}`;
+        const querySegment = `search?query=${processedQuery}`;
         return BACKEND_URL + querySegment;
     }
     async function handleSearch(e: Event) {

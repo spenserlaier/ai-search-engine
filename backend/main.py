@@ -2,18 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import router as api_router
 from contextlib import asynccontextmanager
-from http_client import client as shared_client
+import http_client
 import httpx
-
-# Shared client placeholder (can import this in other modules)
-http_client: httpx.AsyncClient | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    shared_client = httpx.AsyncClient()
-    http_client = httpx.AsyncClient()
+    http_client.set_client(httpx.AsyncClient())
     yield  # App runs here
-    await shared_client.aclose()
+    await http_client.get_client().aclose()
 
 app = FastAPI(lifespan=lifespan)
 
