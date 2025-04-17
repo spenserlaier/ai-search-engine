@@ -45,20 +45,25 @@ async def analyze_article(url: str, query: str):
     print(article_text)
     if article_text != None and article_text != "":
         prompt = f"""
-You are an assistant that analyzes articles in relation to a user query.
+Query: {query}
+
+You are an assistant that analyzes an article to find content relevant to the user's query above.
 
 Your task:
 - Read the article below.
-- Identify the most relevant snippet that addresses the query.
+- Identify the most relevant snippet that directly answers or relates to the query.
+- Relevance should be based on literal, factual connection — not metaphorical, symbolic, or humorous interpretation.
 - Briefly explain why the snippet is relevant.
 
+Example:
+Query: What are the fastest land animals?
+Article: "Cheetahs can reach speeds of up to 70 mph, making them the fastest land animal. Falcons are even faster, but they fly."
+Snippet: "Cheetahs can reach speeds of up to 70 mph, making them the fastest land animal."
+Relevance: It directly answers the query by naming and describing the fastest land animal.
+
 Format your response like this (no extra commentary):
-Snippet: <the relevant sentence or passage>
+Snippet: "<the relevant sentence or passage from the article>"
 Relevance: <a short explanation of how it answers or relates to the query>
-
-Do not include anything outside of these two labeled lines.
-
-Query: {query}
 
 Article:
 {article_text}

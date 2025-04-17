@@ -51,7 +51,10 @@
     <!-- Results View -->
     <main class="results">
         <div class="search-bar">
-            <input bind:value={query} on:input={() => updateQuery(query)} />
+            <form on:submit={handleSearch}>
+                <input bind:value={query} on:input={() => updateQuery(query)} />
+                <button type="submit">Search</button>
+            </form>
             <!-- Maybe re-trigger search on change or on submit -->
         </div>
 

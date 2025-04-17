@@ -31,7 +31,11 @@
     </h2>
     <p class="snippet">{snippet}</p>
     <small class="url">{url}</small>
-    <button on:click={analyze} disabled={analyzing}
+    <button
+        class="analysis-button"
+        style="visibility: {analysis ? 'hidden' : 'visible'}"
+        on:click={analyze}
+        disabled={analyzing}
         >{analyzing ? "Generating Analysis..." : "Analyze Relevance"}</button
     >
     {#if analysis}
