@@ -1,3 +1,4 @@
+from backend.models import SearchResult
 import http_client
 from readability import Document
 import httpx
@@ -77,3 +78,52 @@ Article:
         return response
     else:
         return "analysis unavailable for this article"
+
+async def rewrite_query(query: str):
+    system_prompt = (
+    "You are a search assistant tasked with improving user queries to optimize them for better search results.\n"
+    "Your task is to rewrite the user's query in a way that will return more relevant and accurate results from the search engine.\n"
+    "Consider the following when rewriting:\n"
+    "1. Clarify vague or ambiguous terms to avoid irrelevant results.\n"
+    "2. Use more specific terms to narrow down the scope, ensuring better relevance.\n"
+    "3. Remove unnecessary words or concepts that might lead to too broad or irrelevant results.\n"
+    "4. If the query is already clear, do not change it unless there is a strong opportunity to optimize it.\n\n"
+    "Provide the rewritten query in a simple, natural form without excessive alterations.\n"
+    "Return only the original query or its optimized variation, and nothing else."
+)
+    user_prompt = f"Query: {query}"
+    response = await generate_model_response(user_prompt, False, system_prompt)
+    return response
+
+def format_search_results(results: list[SearchResult]) -> str:
+    formatted = []
+    for i, result in enumerate(results, start=1):
+        formatted.append(
+                f"{i}. Title: \"{result.title}\"\n   Snippet: \"{result.content}\" URL: \"{result.url}\""
+        )
+    return "\n\n".join(formatted)
+
+async def rank_results(query: str, results: list[SearchResult]):
+    system_prompt = (
+    "You are an intelligent search assistant tasked with evaluating search results based on their relevance to a given query.\n"
+    "Each result includes a title and a snippet.\n\n"
+    "For each result, evaluate its relevance to the query on a scale from 0 to 10, where:\n"
+    " - 10 means the snippet directly and thoroughly answers the query.\n"
+    " - 0 means the snippet is completely unrelated.\n\n"
+    "Output your results in the following JSON format (as a list of objects):\n\n"
+    "[\n"
+    "  {\n"
+    "    \"score\": <integer between 0-10>,\n"
+    "    \"title\": \"<title of the source>\",\n"
+    "    \"snippet\": \"<snippet from the article>\"\n"
+    "    \"url\": \"<article url>\"\n"
+    "  },\n"
+    "  ...\n"
+    "]\n\n"
+    "Do not include anything else outside the JSON array.\n"
+    "Do NOT include YouTube results unless they are highly relevant to the query.\n"
+)
+    formatted_results = format_search_results(results)
+    response = await generate_model_response(formatted_results, False, system_prompt)
+    return response
+
