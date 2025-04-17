@@ -32,10 +32,11 @@ async def rank(request: RankingRequest):
     response = await rank_results(request)
     return response
 
-@router.post("/rewrite", response_model=RewriteResponse)
+@router.post("/rewrite", response_model=SearchResponse)
 async def rewrite(request: RewriteRequest):
-    response = await rewrite_query(request)
-    return response
+    response: RewriteResponse = await rewrite_query(request)
+    search_results = await search(response.rewritten_query)
+    return search_results
 
 
 

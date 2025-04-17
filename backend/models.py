@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from typing import List, Optional
 
 class SearchResult(BaseModel):
@@ -27,8 +27,8 @@ class RewriteRequest(BaseModel):
 class RewriteResponse(BaseModel):
     rewritten_query: str
 
-class RankingResponse(BaseModel):
-    __root__ : list[ScoredSearchResponse]
+class RankingResponse(RootModel[List[ScoredSearchResponse]]):
+    pass
 
 class RankingRequest(BaseModel):
     search_results: list[SearchResult]

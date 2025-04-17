@@ -1,5 +1,5 @@
 from pydantic import TypeAdapter, parse_obj_as
-from backend.models import AnalysisResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult
+from models import AnalysisResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult
 import http_client
 from readability import Document
 import httpx
