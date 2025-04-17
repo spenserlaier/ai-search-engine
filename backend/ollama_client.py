@@ -7,15 +7,27 @@ import json
 OLLAMA_URL = "http://localhost:11434"
 OLLAMA_MODEL = "gemma3:4b"
 
-async def generate_model_response(prompt, stream=False):
+async def generate_model_response(prompt="", stream=False, system_prompt=""):
     print('attempting to generate model response')
-    response = await http_client.get_client().post(f"{OLLAMA_URL}/api/generate", json={
-        "model": OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": stream
+    response = None
+    if system_prompt:
+        response = await http_client.get_client().post(f"{OLLAMA_URL}/api/chat", json={
+        "model": OLLAMA_MODEL,  # or your chosen model
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False
         })
+        print("got llm response: ", response.json())
+    else:
+        response = await http_client.get_client().post(f"{OLLAMA_URL}/api/generate", json={
+            "model": OLLAMA_MODEL,
+            "prompt": prompt,
+            "stream": stream
+            })
     response.raise_for_status()
-    return response.json()["response"]
+    return response.json()["message"]["content"]
 
 async def analyze_results(query: str, results: list):
     text_blob = "\n".join([r["title"] + "\n" + r.get("content", "") for r in results])
@@ -44,31 +56,23 @@ async def analyze_article(url: str, query: str):
     article_text = await extract_article_text(url)
     print(article_text)
     if article_text != None and article_text != "":
-        prompt = f"""
-Query: {query}
-
-You are an assistant that analyzes an article to find content relevant to the user's query above.
-
-Your task:
-- Read the article below.
-- Identify the most relevant snippet that directly answers or relates to the query.
-- Relevance should be based on literal, factual connection — not metaphorical, symbolic, or humorous interpretation.
-- Briefly explain why the snippet is relevant.
-
-Example:
-Query: What are the fastest land animals?
-Article: "Cheetahs can reach speeds of up to 70 mph, making them the fastest land animal. Falcons are even faster, but they fly."
-Snippet: "Cheetahs can reach speeds of up to 70 mph, making them the fastest land animal."
-Relevance: It directly answers the query by naming and describing the fastest land animal.
-
-Format your response like this (no extra commentary):
-Snippet: "<the relevant sentence or passage from the article>"
-Relevance: <a short explanation of how it answers or relates to the query>
-
+        system_prompt = (
+    "You are a strict snippet extractor.\n"
+    "Your job is to read an article and extract the single most relevant quoted snippet "
+    "that answers a user's query.\n\n"
+    "Your response must follow this exact format (with no additions):\n"
+    "\"<quoted passage from the article>\"\n"
+    "<brief explanation of how the snippet directly answers or relates to the query>\n\n"
+    "If the snippet chosen is not highly relevant to the query as presented, simply return the string 'Analysis unavailable for this link'."
+    "Do NOT include greetings, summaries, bullet points, markdown, or commentary.\n"
+    "Do NOT answer the query yourself — only extract from the article.\n"
+    "Focus on literal and factual relevance — not metaphor, humor, or symbolic associations."
+        )
+        user_prompt = f"""Query: {query}
 Article:
 {article_text}
 """
-        response = await generate_model_response(prompt)
+        response = await generate_model_response(user_prompt, False, system_prompt)
         print("received response: ", response)
         return response
     else:
