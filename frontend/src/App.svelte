@@ -1,6 +1,7 @@
 <script lang="ts">
     const BACKEND_URL = "http://localhost:9000/";
     import SearchResult from "./lib/SearchResult.svelte";
+    import SearchResultList from "./lib/SearchResultList.svelte";
     let query = "";
     let submitted = false;
     type SearchResponse = {
@@ -46,6 +47,7 @@
             <input bind:value={query} placeholder="Search..." />
             <button type="submit">Search</button>
         </form>
+        nothing submitted yet
     </main>
 {:else}
     <!-- Results View -->
@@ -64,22 +66,14 @@
             <button>Images</button>
             <!-- More categories -->
         </div>
-
-        <div class="results-list">
-            <div class="results-list">
-                {#if queryResponse !== undefined}
-                    {#each queryResponse.results as result}
-                        <SearchResult
-                            title={result.title}
-                            url={result.url}
-                            snippet={result.content}
-                            {BACKEND_URL}
-                            {query}
-                        />
-                    {/each}
-                {/if}
-            </div>
-            <!-- Show your enhanced LLM + SearXNG results here -->
-        </div>
+        {#if queryResponse !== undefined}
+            <SearchResultList
+                {BACKEND_URL}
+                {query}
+                results={queryResponse.results}
+            />
+        {:else}
+            queryresponse is apparently undefined: {queryResponse}
+        {/if}
     </main>
 {/if}
