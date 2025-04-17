@@ -1,4 +1,5 @@
-from backend.models import SearchResult
+from pydantic import TypeAdapter, parse_obj_as
+from backend.models import AnalysisResponse, RankingRequest, RankingResponse, SearchResult
 import http_client
 from readability import Document
 import httpx
@@ -75,9 +76,9 @@ Article:
 """
         response = await generate_model_response(user_prompt, False, system_prompt)
         print("received response: ", response)
-        return response
+        return AnalysisResponse(analysis=response)
     else:
-        return "analysis unavailable for this article"
+        return AnalysisResponse(analysis="Analysis unavailable for this article")
 
 async def rewrite_query(query: str):
     system_prompt = (
@@ -103,7 +104,9 @@ def format_search_results(results: list[SearchResult]) -> str:
         )
     return "\n\n".join(formatted)
 
-async def rank_results(query: str, results: list[SearchResult]):
+#async def rank_results(query: str, results: list[SearchResult]):
+async def rank_results(request: RankingRequest):
+
     system_prompt = (
     "You are an intelligent search assistant tasked with evaluating search results based on their relevance to a given query.\n"
     "Each result includes a title and a snippet.\n\n"
@@ -123,7 +126,17 @@ async def rank_results(query: str, results: list[SearchResult]):
     "Do not include anything else outside the JSON array.\n"
     "Do NOT include YouTube results unless they are highly relevant to the query.\n"
 )
-    formatted_results = format_search_results(results)
-    response = await generate_model_response(formatted_results, False, system_prompt)
+    formatted_results = format_search_results(request.search_results)
+    query = request.query
+    user_prompt = (f"Query: {query} \n"
+                   f"Article data: {formatted_results}\n"
+                    )
+    response = await generate_model_response(user_prompt, False, system_prompt)
+    try:
+        json_data = json.loads(response)
+        adapter = TypeAdapter(list[RankingResponse])
+        return adapter.validate_python(json_data)
+    except:
+        print("unable to parse result rankings from llm response")
     return response
 

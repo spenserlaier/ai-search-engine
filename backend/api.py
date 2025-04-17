@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from searxng_client import search_searxng
-from ollama_client import analyze_results, analyze_article
-from models import SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
+from ollama_client import analyze_results, analyze_article, rank_results
+from models import RankingRequest, RankingResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
 
 router = APIRouter()
 
@@ -25,5 +25,10 @@ async def analyze(request: AnalysisRequest):
     print("received analysis request: ", request)
     response = await analyze_article(request.url, request.query)
     print("generated analysis response: ", response)
-    return AnalysisResponse(analysis=response)
+    return response
+
+@router.post("/rank", response_model=RankingResponse)
+async def rank(request: RankingRequest):
+    response = await rank_results(request)
+    return response
 

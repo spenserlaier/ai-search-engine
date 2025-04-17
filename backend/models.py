@@ -11,9 +11,24 @@ class SearchResponse(BaseModel):
     results: List[SearchResult]
     analysis: str
 
+class ScoredSearchResponse(SearchResponse):
+    score: int
+
 class AnalysisRequest(BaseModel):
     url: str
     query: str
 
 class AnalysisResponse(BaseModel):
     analysis: str
+
+class RankingResponse(BaseModel):
+    __root__ : list[ScoredSearchResponse]
+
+class RankingRequest(BaseModel):
+    search_results: list[SearchResult]
+    query: str
+
+
+
+
+
