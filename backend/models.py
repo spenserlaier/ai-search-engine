@@ -21,6 +21,12 @@ class AnalysisRequest(BaseModel):
 class AnalysisResponse(BaseModel):
     analysis: str
 
+class RewriteRequest(BaseModel):
+    query: str
+
+class RewriteResponse(BaseModel):
+    rewritten_query: str
+
 class RankingResponse(BaseModel):
     __root__ : list[ScoredSearchResponse]
 

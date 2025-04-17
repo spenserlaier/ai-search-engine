@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from searxng_client import search_searxng
-from ollama_client import analyze_results, analyze_article, rank_results
-from models import RankingRequest, RankingResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
+from ollama_client import analyze_results, analyze_article, rank_results, rewrite_query
+from models import RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
 
 router = APIRouter()
 
@@ -31,4 +31,12 @@ async def analyze(request: AnalysisRequest):
 async def rank(request: RankingRequest):
     response = await rank_results(request)
     return response
+
+@router.post("/rewrite", response_model=RewriteResponse)
+async def rewrite(request: RewriteRequest):
+    response = await rewrite_query(request)
+    return response
+
+
+
 

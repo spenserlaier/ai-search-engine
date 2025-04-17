@@ -1,5 +1,5 @@
 from pydantic import TypeAdapter, parse_obj_as
-from backend.models import AnalysisResponse, RankingRequest, RankingResponse, SearchResult
+from backend.models import AnalysisResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult
 import http_client
 from readability import Document
 import httpx
@@ -80,7 +80,8 @@ Article:
     else:
         return AnalysisResponse(analysis="Analysis unavailable for this article")
 
-async def rewrite_query(query: str):
+async def rewrite_query(request: RewriteRequest):
+    query = request.query
     system_prompt = (
     "You are a search assistant tasked with improving user queries to optimize them for better search results.\n"
     "Your task is to rewrite the user's query in a way that will return more relevant and accurate results from the search engine.\n"
@@ -94,7 +95,7 @@ async def rewrite_query(query: str):
 )
     user_prompt = f"Query: {query}"
     response = await generate_model_response(user_prompt, False, system_prompt)
-    return response
+    return RewriteResponse(rewritten_query=response)
 
 def format_search_results(results: list[SearchResult]) -> str:
     formatted = []
