@@ -9,10 +9,35 @@
         score: number;
     };
     export let results: Result[];
+    let localResults = results;
+    let awaitingRerank = false;
+    async function rerankResults(query: string, results: Result[]) {
+        awaitingRerank = true;
+        const res = await fetch(BACKEND_URL + "rank", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: query,
+                search_results: results,
+            }),
+        });
+        const json = await res.json();
+        console.log("retrieved reranked results. printing...");
+        console.log(json);
+        localResults = [...json];
+    }
 </script>
 
 <div class="results-list">
-    {#each results as result}
+    <button
+        disabled={awaitingRerank}
+        on:click={() => rerankResults(query, results)}
+    >
+        {awaitingRerank
+            ? "Reranking Queries..."
+            : "Rerank Results Using AI"}</button
+    >
+    {#each localResults as result}
         <SearchResult
             title={result.title}
             url={result.url}

@@ -11,7 +11,7 @@ class SearchResponse(BaseModel):
     results: List[SearchResult]
     analysis: str
 
-class ScoredSearchResponse(SearchResponse):
+class ScoredSearchResult(SearchResult):
     score: int
 
 class AnalysisRequest(BaseModel):
@@ -27,7 +27,7 @@ class RewriteRequest(BaseModel):
 class RewriteResponse(BaseModel):
     rewritten_query: str
 
-class RankingResponse(RootModel[List[ScoredSearchResponse]]):
+class RankingResponse(RootModel[List[ScoredSearchResult]]):
     pass
 
 class RankingRequest(BaseModel):

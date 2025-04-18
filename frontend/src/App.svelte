@@ -17,6 +17,10 @@
         content: string;
         score: number;
     };
+    type RankingRequest = {
+        query: string;
+        searchResults: Result[];
+    };
     let queryResponse: SearchResponse | undefined = undefined;
 
     function buildQueryURL(query: string) {

@@ -3,6 +3,7 @@ from models import AnalysisResponse, RankingRequest, RankingResponse, RewriteReq
 import http_client
 from readability import Document
 import httpx
+import re
 from bs4 import BeautifulSoup
 import json
 
@@ -20,14 +21,15 @@ async def generate_model_response(prompt="", stream=False, system_prompt=""):
             {"role": "user", "content": prompt}
         ],
         "stream": False
-        })
-        print("got llm response: ", response.json())
+        }, 
+                                                       timeout=15)
     else:
         response = await http_client.get_client().post(f"{OLLAMA_URL}/api/generate", json={
             "model": OLLAMA_MODEL,
             "prompt": prompt,
             "stream": stream
-            })
+            },
+                                                       timeout=15)
     response.raise_for_status()
     return response.json()["message"]["content"]
 
@@ -38,12 +40,10 @@ async def analyze_results(query: str, results: list):
     return response
 
 async def extract_article_text(url: str) -> str:
-    print("extracting article text from url: ", url)
     try:
         response = await httpx.AsyncClient().get(url, timeout=10, follow_redirects=False)
         # redirects get messy on certain websites, might need special procedures to handle them
         response.raise_for_status()
-        print("got extracted response: ", response)
 
         doc = Document(response.text)
         summary_html = doc.summary()
@@ -105,39 +105,106 @@ def format_search_results(results: list[SearchResult]) -> str:
         )
     return "\n\n".join(formatted)
 
-#async def rank_results(query: str, results: list[SearchResult]):
-async def rank_results(request: RankingRequest):
+def sort_ranked_results(ranking: RankingResponse) -> RankingResponse:
+    print(f"received results to sort:", ranking)
+    sorted_items = sorted(
+        ranking.root,
+        key=lambda item: (-item.score, item.title.lower())  # Descending score, then alphabetical
+    )
+    return RankingResponse(sorted_items)
 
-    system_prompt = (
-    "You are an intelligent search assistant tasked with evaluating search results based on their relevance to a given query.\n"
-    "Each result includes a title and a snippet.\n\n"
-    "For each result, evaluate its relevance to the query on a scale from 0 to 10, where:\n"
-    " - 10 means the snippet directly and thoroughly answers the query.\n"
-    " - 0 means the snippet is completely unrelated.\n\n"
-    "Output your results in the following JSON format (as a list of objects):\n\n"
-    "[\n"
-    "  {\n"
-    "    \"score\": <integer between 0-10>,\n"
-    "    \"title\": \"<title of the source>\",\n"
-    "    \"snippet\": \"<snippet from the article>\"\n"
-    "    \"url\": \"<article url>\"\n"
-    "  },\n"
-    "  ...\n"
-    "]\n\n"
-    "Do not include anything else outside the JSON array.\n"
-    "Do NOT include YouTube results unless they are highly relevant to the query.\n"
-)
-    formatted_results = format_search_results(request.search_results)
+from typing import List, Any
+
+def batch_list(data: List[Any], batch_size: int) -> List[List[Any]]:
+    return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+
+
+async def rank_results(request: RankingRequest):
+    system_prompt = """
+You are an intelligent search assistant.
+
+Your task is to evaluate the relevance of search results to a given user query.
+
+Each result contains:
+- a title
+- a snippet
+- a URL
+
+Instructions:
+- Assign each result a score from 0 to 10 based on how relevant it is to the query.
+  - 10 = The result directly and thoroughly answers the query.
+  - 0 = The result is completely unrelated.
+- Return ONLY a JSON array of objects, in this exact format:
+
+[
+  {
+    "score": <integer between 0 and 10>,
+    "title": "<title of the result>",
+    "snippet": "<snippet from the result>",
+    "url": "<URL of the result>"
+  },
+  ...
+]
+
+Rules:
+- Do NOT explain your reasoning.
+- Do NOT include any text outside the JSON array.
+- Do NOT include YouTube results unless they are highly relevant to the query.
+
+Example:
+
+Query: "economic impact of tariffs in 2025"
+
+[
+  {
+    "score": 9,
+    "title": "Tariffs in 2025: Economic Fallout",
+    "snippet": "Tariffs imposed in early 2025 have caused disruptions in global supply chains and increased prices in several sectors.",
+    "url": "https://example.com/article1"
+  },
+  {
+    "score": 2,
+    "title": "Baking Sourdough at Home",
+    "snippet": "Sourdough baking surged in popularity in 2025 as people explored home cooking.",
+    "url": "https://example.com/article2"
+  }
+]
+
+Now evaluate the following results using the same format:
+"""
+    #formatted_results = format_search_results(request.search_results)
+    response =[] 
     query = request.query
-    user_prompt = (f"Query: {query} \n"
-                   f"Article data: {formatted_results}\n"
-                    )
-    response = await generate_model_response(user_prompt, False, system_prompt)
+    for batch in batch_list(request.search_results, 7):
+        # if batch size is too large, gemma begins to ignore original prompt
+        formatted_results = format_search_results(batch)
+        try: 
+            user_prompt = (f"Query: {query} \n"
+                           f"Article data: {formatted_results}\n"
+                            )
+            model_response = await generate_model_response(user_prompt, False, system_prompt)
+            print("model response: ", model_response)
+            match = re.search(r'\[\s*{.*}\s*\]', model_response, re.DOTALL)
+            if match:
+                clean_json_str = match.group(0)
+                parsed = json.loads(clean_json_str)
+                response += parsed
+            else:
+                print("Could not extract valid JSON array.")
+        except Exception as e:
+            print("failed to convert to json", e)
+    #print("current state of the response looks like this:", response)
     try:
-        json_data = json.loads(response)
-        adapter = TypeAdapter(list[RankingResponse])
-        return adapter.validate_python(json_data)
+        #json_data = json.loads(response)
+        print("loaded json data: ", response)
+        adapter = TypeAdapter(RankingResponse)
+        
+        # sort in score order; break ties alphabetically
+        ranked_results: RankingResponse = adapter.validate_python(response)
+        return sort_ranked_results(ranked_results)
     except:
-        print("unable to parse result rankings from llm response")
-    return response
+        #print("unable to parse result rankings from llm response")
+        #return sort_ranked_results(response)
+        print("problematic response:", response)
+        return None
 

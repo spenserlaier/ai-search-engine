@@ -29,6 +29,9 @@ async def analyze(request: AnalysisRequest):
 
 @router.post("/rank", response_model=RankingResponse)
 async def rank(request: RankingRequest):
+    # TODO: sorting is done in the backend, so we may not need a RankingResponse
+    # (which includes the llm scores)-- we may just want to return a regular
+    # searchresponse
     response = await rank_results(request)
     return response
 

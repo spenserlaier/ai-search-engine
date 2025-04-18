@@ -5,9 +5,6 @@
     export let snippet: string;
     export let BACKEND_URL: string;
     let analyzing = false;
-    type Analysis = {
-        analysis: string;
-    };
     export let analysis: string | null = null;
     async function analyze() {
         analyzing = true;
@@ -22,6 +19,17 @@
         const json: Analysis = await res.json();
         analysis = json.analysis;
         console.log(analysis);
+    }
+    async function rerankResults(query: string, results: Result[]) {
+        const res = await fetch(BACKEND_URL + "rerank", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: query,
+                search_results: results,
+            }),
+        });
+        const json = await res.json();
     }
 </script>
 
