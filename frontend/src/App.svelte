@@ -4,7 +4,11 @@
     import SearchResultList from "./lib/SearchResultList.svelte";
     let query = "";
     let submitted = false;
+    let useOptimizedQueryResults = false;
+    let optimizedQueryResult: SearchResponse | undefined = undefined;
+
     type SearchResponse = {
+        query: string;
         results: Result[];
     };
     type Result = {
@@ -19,6 +23,33 @@
         const processedQuery = encodeURIComponent(query);
         const querySegment = `search?query=${processedQuery}`;
         return BACKEND_URL + querySegment;
+    }
+
+    async function getAiOptimizedResults(originalQuery: string) {
+        const res = await fetch(BACKEND_URL + "smart-search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: originalQuery,
+            }),
+        });
+        const json: SearchResponse = await res.json();
+        console.log("got optimized query result: ", json);
+        optimizedQueryResult = json;
+    }
+
+    async function toggleUseAiOptimizedResults(e: Event) {
+        e.preventDefault();
+        if (
+            useOptimizedQueryResults === false &&
+            optimizedQueryResult === undefined &&
+            query !== ""
+        ) {
+            useOptimizedQueryResults = true;
+            getAiOptimizedResults(query);
+        } else {
+            useOptimizedQueryResults = false;
+        }
     }
     async function handleSearch(e: Event) {
         e.preventDefault();
@@ -52,6 +83,11 @@
 {:else}
     <!-- Results View -->
     <main class="results">
+        <button on:click={toggleUseAiOptimizedResults}>
+            {useOptimizedQueryResults
+                ? "Use Default Results"
+                : "Optimize Query With AI"}
+        </button>
         <div class="search-bar">
             <form on:submit={handleSearch}>
                 <input bind:value={query} on:input={() => updateQuery(query)} />
@@ -66,14 +102,22 @@
             <button>Images</button>
             <!-- More categories -->
         </div>
-        {#if queryResponse !== undefined}
+        {#if !useOptimizedQueryResults && queryResponse !== undefined}
             <SearchResultList
                 {BACKEND_URL}
                 {query}
                 results={queryResponse.results}
             />
+        {:else if useOptimizedQueryResults && optimizedQueryResult !== undefined}
+            <h2>Optimized Query Results</h2>
+            <h3>Optimized Query: {optimizedQueryResult.query}</h3>
+            <SearchResultList
+                {BACKEND_URL}
+                query={optimizedQueryResult.query}
+                results={optimizedQueryResult.results}
+            />
         {:else}
-            queryresponse is apparently undefined: {queryResponse}
+            Loading Results...
         {/if}
     </main>
 {/if}
