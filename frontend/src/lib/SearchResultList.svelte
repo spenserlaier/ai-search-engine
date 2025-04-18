@@ -25,6 +25,7 @@
         console.log("retrieved reranked results. printing...");
         console.log(json);
         localResults = [...json];
+        awaitingRerank = false;
     }
 </script>
 

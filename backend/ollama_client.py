@@ -1,5 +1,5 @@
 from pydantic import TypeAdapter, parse_obj_as
-from models import AnalysisResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult
+from models import AnalysisResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, ScoredSearchResult, SearchResult
 import http_client
 from readability import Document
 import httpx
@@ -134,47 +134,37 @@ Instructions:
 - Assign each result a score from 0 to 10 based on how relevant it is to the query.
   - 10 = The result directly and thoroughly answers the query.
   - 0 = The result is completely unrelated.
-- Return ONLY a JSON array of objects, in this exact format:
+- Evaluate the results in the order they are provided.
+- Return ONLY a JSON array of integers. Each integer represents the score for the corresponding result, by index.
 
-[
-  {
-    "score": <integer between 0 and 10>,
-    "title": "<title of the result>",
-    "snippet": "<snippet from the result>",
-    "url": "<URL of the result>"
-  },
-  ...
-]
+Format:
+[score1, score2, score3, ...]
 
 Rules:
 - Do NOT explain your reasoning.
-- Do NOT include any text outside the JSON array.
-- Do NOT include YouTube results unless they are highly relevant to the query.
+- Do NOT include any additional text or formatting.
+- Do NOT include object fields like "title" or "url".
+- The number of scores MUST match the number of search results.
+- Do NOT omit or merge any results — one score per result, in order.
 
 Example:
 
 Query: "economic impact of tariffs in 2025"
 
 [
-  {
-    "score": 9,
-    "title": "Tariffs in 2025: Economic Fallout",
-    "snippet": "Tariffs imposed in early 2025 have caused disruptions in global supply chains and increased prices in several sectors.",
-    "url": "https://example.com/article1"
-  },
-  {
-    "score": 2,
-    "title": "Baking Sourdough at Home",
-    "snippet": "Sourdough baking surged in popularity in 2025 as people explored home cooking.",
-    "url": "https://example.com/article2"
-  }
+  9,
+  2,
+  6,
+  0
 ]
 
 Now evaluate the following results using the same format:
 """
+
     #formatted_results = format_search_results(request.search_results)
-    response =[] 
+    response = []
     query = request.query
+    idx = 0
     for batch in batch_list(request.search_results, 7):
         # if batch size is too large, gemma begins to ignore original prompt
         formatted_results = format_search_results(batch)
@@ -184,11 +174,20 @@ Now evaluate the following results using the same format:
                             )
             model_response = await generate_model_response(user_prompt, False, system_prompt)
             print("model response: ", model_response)
-            match = re.search(r'\[\s*{.*}\s*\]', model_response, re.DOTALL)
+            #match = re.search(r'\[\s*{.*}\s*\]', model_response, re.DOTALL)
+            match = re.search(r'\[\s*(?:\d+\s*,\s*)*\d+\s*\]', model_response)
             if match:
                 clean_json_str = match.group(0)
                 parsed = json.loads(clean_json_str)
-                response += parsed
+                for score in parsed:
+                    old_result = request.search_results[idx]
+                    scored_response = ScoredSearchResult(
+                            title=old_result.title,
+                            content=old_result.content,
+                            url=old_result.url,
+                            score=score
+                            )
+                    response.append(scored_response)
             else:
                 print("Could not extract valid JSON array.")
         except Exception as e:
