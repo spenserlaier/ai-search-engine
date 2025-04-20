@@ -202,6 +202,7 @@ Now evaluate the following results using the same format:
                             score=score
                             )
                     response.append(scored_response)
+                    idx += 1
             else:
                 print("Could not extract valid JSON array.")
         except Exception as e:
