@@ -41,12 +41,6 @@
     >
     <ResponseGeneration {BACKEND_URL} {query} />
     {#each localResults as result}
-        <SearchResult
-            title={result.title}
-            url={result.url}
-            snippet={result.content}
-            {BACKEND_URL}
-            {query}
-        />
+        <SearchResult {result} {BACKEND_URL} {query} />
     {/each}
 </div>

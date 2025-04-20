@@ -1,8 +1,6 @@
 <script lang="ts">
-    export let title: string;
-    export let url: string;
     export let query: string;
-    export let snippet: string;
+    export let result: Result;
     export let BACKEND_URL: string;
     let analyzing = false;
     export let analysis: string | null = null;
@@ -12,7 +10,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                url: encodeURI(url),
+                url: encodeURI(result.url),
                 query: query,
             }),
         });
@@ -20,25 +18,17 @@
         analysis = json.analysis;
         console.log(analysis);
     }
-    async function rerankResults(query: string, results: Result[]) {
-        const res = await fetch(BACKEND_URL + "rerank", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                query: query,
-                search_results: results,
-            }),
-        });
-        const json = await res.json();
-    }
 </script>
 
 <article class="search-result">
     <h2 class="title">
-        <a href={url} target="_blank" rel="noopener noreferrer">{title}</a>
+        <a href={result.url} target="_blank" rel="noopener noreferrer"
+            >{result.title}</a
+        >
     </h2>
-    <p class="snippet">{snippet}</p>
-    <small class="url">{url}</small>
+    <img src={result.thumbnail} alt="thumbnail" />
+    <p class="snippet">{result.content}</p>
+    <small class="url">{result.url}</small>
     <button
         class="analysis-button"
         style="visibility: {analysis ? 'hidden' : 'visible'}"
