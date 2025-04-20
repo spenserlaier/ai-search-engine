@@ -1,5 +1,5 @@
 from pydantic import TypeAdapter, parse_obj_as
-from models import AnalysisResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, ScoredSearchResult, SearchResult
+from models import AnalysisResponse, GenerateAnswerRequest, GenerateAnswerResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, ScoredSearchResult, SearchResult
 import http_client
 from readability import Document
 import httpx
@@ -32,6 +32,20 @@ async def generate_model_response(prompt="", stream=False, system_prompt=""):
                                                        timeout=15)
     response.raise_for_status()
     return response.json()["message"]["content"]
+
+async def generate_query_response(request: GenerateAnswerRequest):
+    system_prompt = (
+    "You are an AI assistant integrated into a search engine. "
+    "Your role is to provide clear, concise, and standalone answers to user queries using your general knowledge.\n\n"
+    "- Respond with a direct answer whenever possible.\n"
+    "- Avoid asking the user for more input.\n"
+    "- If the question is ambiguous, briefly mention possible interpretations and give a general answer if feasible.\n"
+    "- If you cannot answer with reasonable certainty, say so clearly.\n\n"
+    "Do not include greetings, sign-offs, or follow-up questions. Keep your answer informative and to the point.\n\n"
+    "At the end of your response, include a confidence score from 0 to 1 in the format: Confidence: [score]"
+)
+    response_text = await generate_model_response(request.query, False, system_prompt)
+    return GenerateAnswerResponse(response=response_text)
 
 async def analyze_results(query: str, results: list):
     text_blob = "\n".join([r["title"] + "\n" + r.get("content", "") for r in results])

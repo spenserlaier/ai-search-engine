@@ -1,5 +1,6 @@
 <script lang="ts">
     import SearchResult from "./SearchResult.svelte";
+    import ResponseGeneration from "./ResponseGeneration.svelte";
     export let BACKEND_URL: string;
     export let query: string;
     type Result = {
@@ -38,6 +39,7 @@
             ? "Reranking Queries..."
             : "Rerank Results Using AI"}</button
     >
+    <ResponseGeneration {BACKEND_URL} {query} />
     {#each localResults as result}
         <SearchResult
             title={result.title}

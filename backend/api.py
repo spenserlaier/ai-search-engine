@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from searxng_client import search_searxng
-from ollama_client import analyze_results, analyze_article, rank_results, rewrite_query
-from models import RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
+from ollama_client import analyze_results, analyze_article, generate_query_response, rank_results, rewrite_query
+from models import GenerateAnswerRequest, GenerateAnswerResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
 
 router = APIRouter()
 
@@ -42,6 +42,10 @@ async def rewrite(request: RewriteRequest):
     print("finished smart search: ", search_results)
     return search_results
 
+@router.post("/generate-answer", response_model=GenerateAnswerResponse)
+async def generateAnswer(request: GenerateAnswerRequest):
+    response: GenerateAnswerResponse = await generate_query_response(request)
+    return response
 
 
 

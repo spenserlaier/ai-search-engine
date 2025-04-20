@@ -22,6 +22,7 @@
         searchResults: Result[];
     };
     let queryResponse: SearchResponse | undefined = undefined;
+    let priorQueryResponse: SearchResponse | undefined = undefined;
 
     function buildQueryURL(query: string) {
         const processedQuery = encodeURIComponent(query);
@@ -59,19 +60,24 @@
         e.preventDefault();
         if (query.trim() !== "") {
             submitted = true;
+            if (queryResponse !== undefined) {
+                priorQueryResponse = { ...queryResponse };
+            } else {
+                priorQueryResponse = undefined;
+            }
+            queryResponse = undefined;
             // Trigger actual search logic here
             const queryURL = buildQueryURL(query);
             const results = await fetch(queryURL);
             const json = await results.json();
             console.log("retrieved web result: ", results);
             console.log("converted json: ", json);
-            queryResponse = json;
+            queryResponse = { ...json };
         }
     }
 
     function updateQuery(newQuery: string) {
         query = newQuery;
-        // Optionally re-run search
     }
 </script>
 
@@ -120,7 +126,13 @@
                 query={optimizedQueryResult.query}
                 results={optimizedQueryResult.results}
             />
-        {:else}
+        {:else if priorQueryResponse !== undefined}
+            <SearchResultList
+                {BACKEND_URL}
+                {query}
+                results={priorQueryResponse.results}
+            />
+        {:else if priorQueryResponse === undefined}
             Loading Results...
         {/if}
     </main>

@@ -34,6 +34,13 @@ class RankingRequest(BaseModel):
     search_results: list[SearchResult]
     query: str
 
+class GenerateAnswerRequest(BaseModel):
+    query : str
+
+class GenerateAnswerResponse(BaseModel):
+    response: str
+
+
 
 
 
