@@ -18,6 +18,10 @@
         analysis = json.analysis;
         console.log(analysis);
     }
+    let imageVisible = true;
+    function handleError() {
+        imageVisible = false;
+    }
 </script>
 
 <article class="search-result">
@@ -26,7 +30,9 @@
             >{result.title}</a
         >
     </h2>
-    <img src={result.thumbnail} alt="thumbnail" />
+    {#if imageVisible}
+        <img src={result.thumbnail} alt="thumbnail" on:error={handleError} />
+    {/if}
     <p class="snippet">{result.content}</p>
     <small class="url">{result.url}</small>
     <button
