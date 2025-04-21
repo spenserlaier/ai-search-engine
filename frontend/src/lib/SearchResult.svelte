@@ -31,16 +31,16 @@
 
 <article class="search-result">
     {#if result.img_src === ""}
-        {#if imageVisible}
-            <div class="image-wrapper">
+        <div class="image-wrapper">
+            {#if imageVisible}
                 <img
                     class="thumbnail"
                     src={result.thumbnail}
                     alt="thumbnail"
                     on:error={handleError}
                 />
-            </div>
-        {/if}
+            {/if}
+        </div>
         <div class="result-info">
             <h2 class="title">
                 <a href={result.url} target="_blank" rel="noopener noreferrer"
@@ -86,6 +86,7 @@
     .search-result {
         margin-bottom: 1.5rem;
         display: flex;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
@@ -120,6 +121,8 @@
         font-size: 0.8rem;
     }
     .image-wrapper {
+        width: 20vw;
+        min-height: 1px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -127,9 +130,17 @@
     }
     .thumbnail {
         min-width: 50%;
+        justify-content: center;
     }
     .result-info {
-        max-width: 80%;
+        /*max-width: 80%;*/
+        max-width: calc(100% - 20vw); /* ensures alignment */
+    }
+    .image-wrapper:empty::before {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 100%;
     }
     /* Mobile: stack vertically */
     @media (max-width: 1400px) {
