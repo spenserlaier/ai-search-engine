@@ -29,8 +29,8 @@
     // which means we need to handle it differently
 </script>
 
-<article class="search-result">
-    {#if result.img_src === ""}
+{#if result.img_src === ""}
+    <article class="search-result">
         <div class="image-wrapper">
             {#if imageVisible}
                 <img
@@ -64,23 +64,21 @@
                 </div>
             {/if}
         </div>
-    {:else if imageVisible}
-        <div class="image-search-result">
-            <img
-                class="image-result"
-                src={result.img_src}
-                alt="search result"
-                on:error={handleError}
-            />
-            <div class="image-information">
-                <a href={result.url} rel="noopener noreferrer">
-                    {result.title}</a
-                >
-                <small> {result.parsed_url[1]}</small>
-            </div>
+    </article>
+{:else if imageVisible}
+    <div class="image-search-result">
+        <img
+            class="image-result"
+            src={result.img_src}
+            alt="search result"
+            on:error={handleError}
+        />
+        <div class="image-information">
+            <a href={result.url} rel="noopener noreferrer"> {result.title}</a>
+            <small> {result.parsed_url[1]}</small>
         </div>
-    {/if}
-</article>
+    </div>
+{/if}
 
 <style>
     .search-result {

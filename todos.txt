@@ -1,4 +1,8 @@
 - add pagination to search results
 - add other result types, like image, news, etc.
     - image result types need special handling and styles compared to regular text results
+    - remove rerank and generate response functionality for image results, since those options don't make much
+    sense when working directly with images
+- move server information to environment variables/config files
+
 
