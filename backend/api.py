@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 from searxng_client import search_searxng
-from ollama_client import analyze_results, analyze_article, generate_query_response, rank_results, rewrite_query
+from ollama_client import analyze_article, generate_query_response, rank_results, rewrite_query
 from models import GenerateAnswerRequest, GenerateAnswerResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
 
 router = APIRouter()
@@ -12,8 +12,8 @@ async def search(query: str = Query(..., min_length=1)):
 
     # You can even validate/clean results here if needed
     parsed_results = [SearchResult(**r) for r in raw_results]
-
-    #analysis = await analyze_results(query, parsed_results)
+    for p in raw_results:
+        if "thumbnail" in p: print(p["thumbnail"]);
     analysis = "this is a sample analysis"
     return SearchResponse(
         query=query,

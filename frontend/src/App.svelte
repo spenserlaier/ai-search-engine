@@ -16,6 +16,7 @@
         url: string;
         content: string;
         score: number;
+        thumbnail: string;
     };
     type RankingRequest = {
         query: string;
@@ -73,8 +74,12 @@
             console.log("retrieved web result: ", results);
             console.log("converted json: ", json);
             queryResponse = { ...json };
+            useOptimizedQueryResults = false;
         }
     }
+
+    //TODO: after swapping to optimized query results, subsequent searches
+    //no longer work. state management in general probably needs an overhaul
 
     function updateQuery(newQuery: string) {
         query = newQuery;

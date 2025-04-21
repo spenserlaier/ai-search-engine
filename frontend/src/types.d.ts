@@ -7,6 +7,7 @@ type Result = {
     url: string;
     content: string;
     score: number;
+    thumbnail: string;
 };
 type RankingRequest = {
     query: string;

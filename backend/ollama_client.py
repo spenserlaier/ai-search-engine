@@ -6,6 +6,7 @@ import httpx
 import re
 from bs4 import BeautifulSoup
 import json
+from playwright.async_api import async_playwright
 
 OLLAMA_URL = "http://localhost:11434"
 OLLAMA_MODEL = "gemma3:4b"
@@ -22,16 +23,22 @@ async def generate_model_response(prompt="", stream=False, system_prompt=""):
         ],
         "stream": False
         }, 
-                                                       timeout=15)
+                                                       timeout=5)
     else:
         response = await http_client.get_client().post(f"{OLLAMA_URL}/api/generate", json={
             "model": OLLAMA_MODEL,
             "prompt": prompt,
             "stream": stream
             },
-                                                       timeout=15)
-    response.raise_for_status()
-    return response.json()["message"]["content"]
+                                                       timeout=5)
+    try:
+        response.raise_for_status()
+        return response.json()["message"]["content"]
+    except Exception as e:
+        print("Issue when generating response. Likely a network timeout.")
+        print(e)
+        return ""
+
 
 async def generate_query_response(request: GenerateAnswerRequest):
     system_prompt = (
@@ -47,11 +54,19 @@ async def generate_query_response(request: GenerateAnswerRequest):
     response_text = await generate_model_response(request.query, False, system_prompt)
     return GenerateAnswerResponse(response=response_text)
 
-async def analyze_results(query: str, results: list):
-    text_blob = "\n".join([r["title"] + "\n" + r.get("content", "") for r in results])
-    prompt = f"Analyze these search results for '{query}':\n{text_blob}"
-    response = await generate_model_response(prompt)
-    return response
+#async def analyze_results(query: str, results: list):
+#    text_blob = "\n".join([r["title"] + "\n" + r.get("content", "") for r in results])
+#    prompt = f"Analyze these search results for '{query}':\n{text_blob}"
+#    response = await generate_model_response(prompt)
+#    return response
+
+async def validate_analysis(analysis: str):
+    # TODO: consider re-prompting based on excessively long analyses to possibly
+    # produce shorter results from a longer analysis
+    print("validating analysis. recieved input had word length of: ", len(analysis.split()))
+    if len(analysis.split()) >= 100:
+        return False
+    return True
 
 async def extract_article_text(url: str) -> str:
     try:
@@ -64,35 +79,59 @@ async def extract_article_text(url: str) -> str:
 
         soup = BeautifulSoup(summary_html, "html.parser")
         text = soup.get_text()
+
         return text.strip()
     except Exception:
-        return ""
+        print("Failed to extract text with httpx. Attempting playwright fallback...")
+    try:
+        playwright_extraction = await extract_article_text_with_playwright(url)
+        return playwright_extraction
+    except Exception:
+        print("Failed to extract article text with playwright.")
+    return ""
+
+async def extract_article_text_with_playwright(url: str) -> str:
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context()
+        page = await context.new_page()
+        
+        await page.goto(url, wait_until="networkidle")
+
+        # Get full rendered HTML
+        html = await page.content()
+        await browser.close()
+
+        # Use readability + BeautifulSoup
+        doc = Document(html)
+        summary_html = doc.summary()
+        soup = BeautifulSoup(summary_html, "html.parser")
+        text = soup.get_text()
+        return text.strip()
 
 async def analyze_article(url: str, query: str):
     article_text = await extract_article_text(url)
-    print(article_text)
     if article_text != None and article_text != "":
         system_prompt = (
-    "You are a strict snippet extractor.\n"
-    "Your job is to read an article and extract the single most relevant quoted snippet "
-    "that answers a user's query.\n\n"
-    "Your response must follow this exact format (with no additions):\n"
-    "\"<quoted passage from the article>\"\n"
-    "<brief explanation of how the snippet directly answers or relates to the query>\n\n"
-    "If the snippet chosen is not highly relevant to the query as presented, simply return the string 'Analysis unavailable for this link'."
-    "Do NOT include greetings, summaries, bullet points, markdown, or commentary.\n"
-    "Do NOT answer the query yourself — only extract from the article.\n"
-    "Focus on literal and factual relevance — not metaphor, humor, or symbolic associations."
-        )
-        user_prompt = f"""Query: {query}
-Article:
-{article_text}
-"""
-        response = await generate_model_response(user_prompt, False, system_prompt)
-        print("received response: ", response)
-        return AnalysisResponse(analysis=response)
-    else:
-        return AnalysisResponse(analysis="Analysis unavailable for this article")
+    "You are a grounded question-answering assistant.\n"
+    "You will be given a user query and an article.\n"
+    "Your task is to answer the query as accurately as possible, using only the information found in the article.\n\n"
+    "If the article directly answers the query, use its information to respond clearly and concisely.\n"
+    "If the article only partially relates, do your best to provide helpful context based on what's there.\n"
+    "If the article does not contain any relevant information, respond exactly with:\n"
+    "Analysis unavailable for this link.\n\n"
+    "Your answer should be brief (1–3 sentences), strictly factual, and grounded in the text.\n"
+    "Do not speculate or hallucinate. Do not include quotes unless they directly support your answer.\n"
+    "Do not introduce unrelated background knowledge or general facts."
+)
+
+        user_prompt = f"""Query: {query} Article: {article_text}"""
+        analysis = await generate_model_response(user_prompt, False, system_prompt)
+        print("retrieved analysis: ", analysis)
+        if await validate_analysis(analysis) and "analysis unavailable" not in analysis.lower():
+
+            return AnalysisResponse(analysis=analysis)
+    return AnalysisResponse(analysis="Analysis unavailable for this article")
 
 async def rewrite_query(request: RewriteRequest):
     query = request.query

@@ -5,6 +5,8 @@ class SearchResult(BaseModel):
     title: str
     content: Optional[str] = None
     url: Optional[str] = None
+    img_src: Optional[str] = None
+    thumbnail: Optional[str] = None
 
 class SearchResponse(BaseModel):
     query: str
