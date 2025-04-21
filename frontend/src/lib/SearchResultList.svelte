@@ -3,12 +3,6 @@
     import ResponseGeneration from "./ResponseGeneration.svelte";
     export let BACKEND_URL: string;
     export let query: string;
-    type Result = {
-        title: string;
-        url: string;
-        content: string;
-        score: number;
-    };
     export let results: Result[];
     let localResults = results;
     let awaitingRerank = false;
@@ -40,7 +34,17 @@
             : "Rerank Results Using AI"}</button
     >
     <ResponseGeneration {BACKEND_URL} {query} />
-    {#each localResults as result}
-        <SearchResult {result} {BACKEND_URL} {query} />
-    {/each}
+    <div class="search-results">
+        {#each localResults as result}
+            <SearchResult {result} {BACKEND_URL} {query} />
+        {/each}
+    </div>
 </div>
+
+<style>
+    .search-results {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+</style>

@@ -18,9 +18,12 @@
         analysis = json.analysis;
         console.log(analysis);
     }
-    let imageVisible = true;
+    let imageVisible =
+        (result.thumbnail !== "" && result.thumbnail !== null) ||
+        result.img_src !== null;
     function handleError() {
         imageVisible = false;
+        console.log("had an image error");
     }
     // TODO: if img_src exists as a property, then the search result is an image result and not a regualr text result,
     // which means we need to handle it differently
@@ -61,9 +64,20 @@
                 </div>
             {/if}
         </div>
-    {:else}
-        <div class="image-result">
-            <img src={result.img_src} alt="search result" />
+    {:else if imageVisible}
+        <div class="image-search-result">
+            <img
+                class="image-result"
+                src={result.img_src}
+                alt="search result"
+                on:error={handleError}
+            />
+            <div class="image-information">
+                <a href={result.url} rel="noopener noreferrer">
+                    {result.title}</a
+                >
+                <small> {result.parsed_url[1]}</small>
+            </div>
         </div>
     {/if}
 </article>
@@ -76,9 +90,18 @@
         justify-content: center;
         flex-wrap: wrap;
     }
+    .image-search-result {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .image-information {
+        display: flex;
+        flex-direction: column;
+    }
     .image-result {
-        max-height: 20%;
-        width: auto;
+        max-width: 20vw;
+        height: auto;
     }
     .title a {
         font-size: 1.25rem;

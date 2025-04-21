@@ -9,6 +9,7 @@ type Result = {
     score: number;
     thumbnail: string;
     img_src: string;
+    parsed_url: string[]
 };
 type RankingRequest = {
     query: string;
