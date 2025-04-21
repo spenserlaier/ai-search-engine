@@ -6,9 +6,12 @@ from models import GenerateAnswerRequest, GenerateAnswerResponse, RankingRequest
 router = APIRouter()
 
 @router.get("/search", response_model=SearchResponse)
-async def search(query: str = Query(..., min_length=1)):
+async def search(query: str = Query(..., min_length=1), 
+                 categories: str | None = Query(None),
+                 engines: str | None = Query(None)):
     print("received query from backend: ", query)
-    raw_results = await search_searxng(query)
+    print("received category list from the backend: ", categories)
+    raw_results = await search_searxng(query, categories)
 
     # You can even validate/clean results here if needed
     parsed_results = [SearchResult(**r) for r in raw_results]

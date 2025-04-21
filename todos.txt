@@ -1,0 +1,4 @@
+- add pagination to search results
+- add other result types, like image, news, etc.
+    - image result types need special handling and styles compared to regular text results
+

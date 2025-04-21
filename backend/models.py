@@ -1,12 +1,14 @@
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, RootModel, ConfigDict
 from typing import List, Optional
 
 class SearchResult(BaseModel):
+    model_config = ConfigDict(extra="allow")
     title: str
     content: Optional[str] = None
     url: Optional[str] = None
     img_src: Optional[str] = None
     thumbnail: Optional[str] = None
+
 
 class SearchResponse(BaseModel):
     query: str

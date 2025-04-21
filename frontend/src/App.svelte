@@ -6,7 +6,7 @@
     let submitted = false;
     let useOptimizedQueryResults = false;
     let optimizedQueryResult: SearchResponse | undefined = undefined;
-
+    let selectedNewsCategory = "";
     type SearchResponse = {
         query: string;
         results: Result[];
@@ -27,7 +27,11 @@
 
     function buildQueryURL(query: string) {
         const processedQuery = encodeURIComponent(query);
-        const querySegment = `search?query=${processedQuery}`;
+        let newsCategoryParam = "";
+        if (selectedNewsCategory !== "") {
+            newsCategoryParam = `categories=${selectedNewsCategory}`;
+        }
+        const querySegment = `search?query=${processedQuery}&${newsCategoryParam}`;
         return BACKEND_URL + querySegment;
     }
 
@@ -82,6 +86,10 @@
     function updateQuery(newQuery: string) {
         query = newQuery;
     }
+    function updateSelectedCategory(e: Event, category: string) {
+        selectedNewsCategory = category;
+        handleSearch(e);
+    }
 </script>
 
 {#if !submitted}
@@ -114,9 +122,13 @@
         <!-- Maybe re-trigger search on change or on submit -->
 
         <div class="filters">
-            <button>All</button>
-            <button>News</button>
-            <button>Images</button>
+            <button on:click={(e) => updateSelectedCategory(e, "")}>All</button>
+            <button on:click={(e) => updateSelectedCategory(e, "news")}
+                >News</button
+            >
+            <button on:click={(e) => updateSelectedCategory(e, "images")}
+                >Images</button
+            >
             <!-- More categories -->
         </div>
         {#if !useOptimizedQueryResults && queryResponse !== undefined}

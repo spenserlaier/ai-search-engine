@@ -22,42 +22,50 @@
     function handleError() {
         imageVisible = false;
     }
+    // TODO: if img_src exists as a property, then the search result is an image result and not a regualr text result,
+    // which means we need to handle it differently
 </script>
 
 <article class="search-result">
-    {#if imageVisible}
-        <div class="image-wrapper">
-            <img
-                class="thumbnail"
-                src={result.thumbnail}
-                alt="thumbnail"
-                on:error={handleError}
-            />
-        </div>
-    {/if}
-    <div class="result-info">
-        <h2 class="title">
-            <a href={result.url} target="_blank" rel="noopener noreferrer"
-                >{result.title}</a
-            >
-        </h2>
-        <small class="url">{result.url}</small>
-        <p class="snippet">{result.content}</p>
-        <button
-            class="analysis-button"
-            style="visibility: {analysis ? 'hidden' : 'visible'}"
-            on:click={analyze}
-            disabled={analyzing}
-            >{analyzing
-                ? "Generating Analysis..."
-                : "Analyze Relevance"}</button
-        >
-        {#if analysis}
-            <div class="analysis">
-                {analysis}
+    {#if result.img_src === ""}
+        {#if imageVisible}
+            <div class="image-wrapper">
+                <img
+                    class="thumbnail"
+                    src={result.thumbnail}
+                    alt="thumbnail"
+                    on:error={handleError}
+                />
             </div>
         {/if}
-    </div>
+        <div class="result-info">
+            <h2 class="title">
+                <a href={result.url} target="_blank" rel="noopener noreferrer"
+                    >{result.title}</a
+                >
+            </h2>
+            <small class="url">{result.url}</small>
+            <p class="snippet">{result.content}</p>
+            <button
+                class="analysis-button"
+                style="visibility: {analysis ? 'hidden' : 'visible'}"
+                on:click={analyze}
+                disabled={analyzing}
+                >{analyzing
+                    ? "Generating Analysis..."
+                    : "Analyze Relevance"}</button
+            >
+            {#if analysis}
+                <div class="analysis">
+                    {analysis}
+                </div>
+            {/if}
+        </div>
+    {:else}
+        <div class="image-result">
+            <img src={result.img_src} alt="search result" />
+        </div>
+    {/if}
 </article>
 
 <style>
@@ -67,6 +75,10 @@
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
+    }
+    .image-result {
+        max-height: 20%;
+        width: auto;
     }
     .title a {
         font-size: 1.25rem;

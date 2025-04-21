@@ -8,6 +8,7 @@ type Result = {
     content: string;
     score: number;
     thumbnail: string;
+    img_src: string;
 };
 type RankingRequest = {
     query: string;
