@@ -46,13 +46,11 @@
 
     async function toggleUseAiOptimizedResults(e: Event) {
         e.preventDefault();
-        if (
-            useOptimizedQueryResults === false &&
-            optimizedQueryResult === undefined &&
-            query !== ""
-        ) {
+        if (useOptimizedQueryResults === false && query !== "") {
             useOptimizedQueryResults = true;
-            getAiOptimizedResults(query);
+            if (optimizedQueryResult === undefined) {
+                getAiOptimizedResults(query);
+            }
         } else {
             useOptimizedQueryResults = false;
         }
