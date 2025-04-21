@@ -87,13 +87,15 @@
 </script>
 
 {#if !submitted}
-    <!-- Landing Page View -->
     <main class="landing">
-        <form on:submit={handleSearch}>
-            <input bind:value={query} placeholder="Search..." />
+        <form class="search-form" on:submit={handleSearch}>
+            <input
+                bind:value={query}
+                class="search-bar"
+                placeholder="Search..."
+            />
             <button type="submit">Search</button>
         </form>
-        nothing submitted yet
     </main>
 {:else}
     <!-- Results View -->
@@ -103,13 +105,15 @@
                 ? "Use Default Results"
                 : "Optimize Query With AI"}
         </button>
-        <div class="search-bar">
-            <form on:submit={handleSearch}>
-                <input bind:value={query} on:input={() => updateQuery(query)} />
-                <button type="submit">Search</button>
-            </form>
-            <!-- Maybe re-trigger search on change or on submit -->
-        </div>
+        <form class="search-form" on:submit={handleSearch}>
+            <input
+                class="search-bar"
+                bind:value={query}
+                on:input={() => updateQuery(query)}
+            />
+            <button type="submit">Search</button>
+        </form>
+        <!-- Maybe re-trigger search on change or on submit -->
 
         <div class="filters">
             <button>All</button>
@@ -142,3 +146,20 @@
         {/if}
     </main>
 {/if}
+
+<style>
+    .landing {
+        background: red;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .search-form {
+        min-width: 90%;
+        background: purple;
+    }
+    .search-bar {
+        min-width: 60%;
+        color: purple;
+    }
+</style>
