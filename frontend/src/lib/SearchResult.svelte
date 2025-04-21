@@ -90,6 +90,8 @@
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
+        max-width: 80%;
+        min-width: 80%;
     }
     .image-search-result {
         display: flex;
@@ -135,32 +137,12 @@
     .result-info {
         /*max-width: 80%;*/
         max-width: calc(100% - 20vw); /* ensures alignment */
+        text-align: left;
     }
     .image-wrapper:empty::before {
         content: "";
         display: block;
         width: 100%;
         height: 100%;
-    }
-    /* Mobile: stack vertically */
-    @media (max-width: 1400px) {
-        .thumbnail {
-            min-width: 5%;
-        }
-        .search-result {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .image-wrapper {
-            width: 100%;
-            margin-bottom: 1rem;
-            justify-content: center;
-        }
-
-        .thumbnail {
-            width: auto;
-            max-width: 100%;
-        }
     }
 </style>
