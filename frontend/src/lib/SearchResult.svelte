@@ -25,33 +25,48 @@
 </script>
 
 <article class="search-result">
-    <h2 class="title">
-        <a href={result.url} target="_blank" rel="noopener noreferrer"
-            >{result.title}</a
-        >
-    </h2>
     {#if imageVisible}
-        <img src={result.thumbnail} alt="thumbnail" on:error={handleError} />
-    {/if}
-    <p class="snippet">{result.content}</p>
-    <small class="url">{result.url}</small>
-    <button
-        class="analysis-button"
-        style="visibility: {analysis ? 'hidden' : 'visible'}"
-        on:click={analyze}
-        disabled={analyzing}
-        >{analyzing ? "Generating Analysis..." : "Analyze Relevance"}</button
-    >
-    {#if analysis}
-        <div class="analysis">
-            {analysis}
+        <div class="image-wrapper">
+            <img
+                class="thumbnail"
+                src={result.thumbnail}
+                alt="thumbnail"
+                on:error={handleError}
+            />
         </div>
     {/if}
+    <div class="result-info">
+        <h2 class="title">
+            <a href={result.url} target="_blank" rel="noopener noreferrer"
+                >{result.title}</a
+            >
+        </h2>
+        <small class="url">{result.url}</small>
+        <p class="snippet">{result.content}</p>
+        <button
+            class="analysis-button"
+            style="visibility: {analysis ? 'hidden' : 'visible'}"
+            on:click={analyze}
+            disabled={analyzing}
+            >{analyzing
+                ? "Generating Analysis..."
+                : "Analyze Relevance"}</button
+        >
+        {#if analysis}
+            <div class="analysis">
+                {analysis}
+            </div>
+        {/if}
+    </div>
 </article>
 
 <style>
     .search-result {
         margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
     }
     .title a {
         font-size: 1.25rem;
@@ -68,5 +83,38 @@
     .url {
         color: #666;
         font-size: 0.8rem;
+    }
+    .image-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 0 0 auto;
+    }
+    .thumbnail {
+        min-width: 50%;
+    }
+    .result-info {
+        max-width: 80%;
+    }
+    /* Mobile: stack vertically */
+    @media (max-width: 1400px) {
+        .thumbnail {
+            min-width: 5%;
+        }
+        .search-result {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-wrapper {
+            width: 100%;
+            margin-bottom: 1rem;
+            justify-content: center;
+        }
+
+        .thumbnail {
+            width: auto;
+            max-width: 100%;
+        }
     }
 </style>
