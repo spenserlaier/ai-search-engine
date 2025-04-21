@@ -15,15 +15,20 @@ async def generate_model_response(prompt="", stream=False, system_prompt=""):
     print('attempting to generate model response')
     response = None
     if system_prompt:
-        response = await http_client.get_client().post(f"{OLLAMA_URL}/api/chat", json={
-        "model": OLLAMA_MODEL,  # or your chosen model
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ],
-        "stream": False
-        }, 
+        try:
+            response = await http_client.get_client().post(f"{OLLAMA_URL}/api/chat", json={
+            "model": OLLAMA_MODEL,  # or your chosen model
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            "stream": False
+            }, 
                                                        timeout=5)
+        except Exception as e:
+            print("Issue when generating response. Likely a network timeout.")
+            print(e)
+            return ""
     else:
         response = await http_client.get_client().post(f"{OLLAMA_URL}/api/generate", json={
             "model": OLLAMA_MODEL,
