@@ -4,8 +4,9 @@
     export let BACKEND_URL: string;
     export let query: string;
     export let results: Result[];
-    export let updateResultsCallback: () => undefined;
-    let localResults = results;
+    export let updateResultsCallback: () => Promise<void>;
+    export let updateListCallback: (results: Result[]) => void;
+    //let localResults = results;
     let awaitingRerank = false;
     async function rerankResults(query: string, results: Result[]) {
         awaitingRerank = true;
@@ -20,8 +21,9 @@
         const json = await res.json();
         console.log("retrieved reranked results. printing...");
         console.log(json);
-        localResults = [];
-        localResults = [...json];
+        //localResults = [];
+        //localResults = [...json];
+        updateListCallback(json);
         awaitingRerank = false;
     }
 </script>
@@ -37,7 +39,7 @@
     >
     <ResponseGeneration {BACKEND_URL} {query} />
     <div class="search-results">
-        {#each localResults as result}
+        {#each results as result}
             <SearchResult {result} {BACKEND_URL} {query} />
         {/each}
     </div>
