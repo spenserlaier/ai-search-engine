@@ -1,6 +1,9 @@
 import http_client
+import os
 from models import SearchRequest
-SEARXNG_URL = "http://localhost:8000"
+from dotenv import load_dotenv
+load_dotenv()
+SEARXNG_URL = os.getenv("SEARXNG_URL")
 
 async def search_searxng(query: str, categories: str | None= None, page_number: int =1  ):
     #print("this is the page number we received in backend: ", page_number)

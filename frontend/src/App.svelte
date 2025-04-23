@@ -1,5 +1,5 @@
 <script lang="ts">
-    const BACKEND_URL = "http://localhost:9000/";
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
     import SearchResult from "./lib/SearchResult.svelte";
     import SearchResultList from "./lib/SearchResultList.svelte";
     let query = "";

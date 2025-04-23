@@ -6,10 +6,13 @@ import httpx
 import re
 from bs4 import BeautifulSoup
 import json
+import os
+from dotenv import load_dotenv
 from playwright.async_api import async_playwright
+load_dotenv()
 
-OLLAMA_URL = "http://localhost:11434"
-OLLAMA_MODEL = "gemma3:4b"
+OLLAMA_URL = os.getenv("OLLAMA_URL")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
 
 async def generate_model_response(prompt="", stream=False, system_prompt=""):
     print('attempting to generate model response')
