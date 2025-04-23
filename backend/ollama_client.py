@@ -54,7 +54,7 @@ async def generate_query_response(request: GenerateAnswerRequest):
     "- If the question is ambiguous, briefly mention possible interpretations and give a general answer if feasible.\n"
     "- If you cannot answer with reasonable certainty, say so clearly.\n\n"
     "Do not include greetings, sign-offs, or follow-up questions. Keep your answer informative and to the point.\n\n"
-    "At the end of your response, include a confidence score from 0 to 1 in the format: Confidence: [score]"
+    #"At the end of your response, include a confidence score from 0 to 1 in the format: Confidence: [score]"
 )
     response_text = await generate_model_response(request.query, False, system_prompt)
     return GenerateAnswerResponse(response=response_text)
@@ -239,12 +239,8 @@ Now evaluate the following results using the same format:
                 parsed = json.loads(clean_json_str)
                 for score in parsed:
                     old_result = request.search_results[idx]
-                    scored_response = ScoredSearchResult(
-                            title=old_result.title,
-                            content=old_result.content,
-                            url=old_result.url,
-                            score=score
-                            )
+                    old_result.score = score
+                    scored_response = ScoredSearchResult(**old_result.model_dump())
                     response.append(scored_response)
                     idx += 1
             else:

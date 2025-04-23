@@ -8,12 +8,21 @@ class SearchResult(BaseModel):
     url: Optional[str] = None
     img_src: Optional[str] = None
     thumbnail: Optional[str] = None
+    score: Optional[float] = None
 
 
 class SearchResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
     query: str
     results: List[SearchResult]
-    analysis: str
+    analysis: Optional[str] = None
+
+class SearchRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    q: str
+    categories: Optional[str] = None
+    pageno: Optional[int] = 1
+    format: Optional[str] = "json"
 
 class ScoredSearchResult(SearchResult):
     score: int

@@ -4,5 +4,7 @@
     - remove rerank and generate response functionality for image results, since those options don't make much
     sense when working directly with images
 - move server information to environment variables/config files
+- convert search request to POST in backend (and frontend). management of query parameters seems to create a host of issues
+  when trying to deal with things like pagination
 
 

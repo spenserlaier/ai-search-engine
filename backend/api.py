@@ -1,17 +1,19 @@
 from fastapi import APIRouter, Query
-from searxng_client import search_searxng
+from searxng_client import search_searxng, search_searxng_post
 from ollama_client import analyze_article, generate_query_response, rank_results, rewrite_query
-from models import GenerateAnswerRequest, GenerateAnswerResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
+from models import GenerateAnswerRequest, GenerateAnswerResponse, RankingRequest, RankingResponse, RewriteRequest, RewriteResponse, SearchRequest, SearchResult, SearchResponse, AnalysisRequest, AnalysisResponse
 
 router = APIRouter()
 
 @router.get("/search", response_model=SearchResponse)
 async def search(query: str = Query(..., min_length=1), 
                  categories: str | None = Query(None),
-                 engines: str | None = Query(None)):
+                 engines: str | None = Query(None),
+                 page_number: int  = Query(1)):
+    print("received page number: ", page_number)
     print("received query from backend: ", query)
     print("received category list from the backend: ", categories)
-    raw_results = await search_searxng(query, categories)
+    raw_results = await search_searxng(query, categories, page_number=page_number)
 
     # You can even validate/clean results here if needed
     parsed_results = [SearchResult(**r) for r in raw_results]
@@ -23,6 +25,15 @@ async def search(query: str = Query(..., min_length=1),
         results=parsed_results,
         analysis=analysis
     )
+@router.post("/search", response_model=SearchResponse)
+async def search_post(request: SearchRequest):
+    print("received search request on backend: ", request)
+    response =  await search_searxng_post(request)
+    return response
+    
+
+
+
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze(request: AnalysisRequest):
     print("received analysis request: ", request)
@@ -41,7 +52,9 @@ async def rank(request: RankingRequest):
 @router.post("/smart-search", response_model=SearchResponse)
 async def rewrite(request: RewriteRequest):
     response: RewriteResponse = await rewrite_query(request)
-    search_results = await search(response.rewritten_query)
+    #search_results = await search(response.rewritten_query)
+    search_request = SearchRequest(q= response.rewritten_query)
+    search_results = await search_post(search_request)
     print("finished smart search: ", search_results)
     return search_results
 

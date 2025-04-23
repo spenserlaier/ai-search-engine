@@ -5,25 +5,23 @@
     let query = "";
     let submitted = false;
     let useOptimizedQueryResults = false;
-    let optimizedQueryResult: SearchResponse | undefined = undefined;
     let selectedNewsCategory = "";
-    type SearchResponse = {
-        query: string;
-        results: Result[];
-    };
-    type Result = {
-        title: string;
-        url: string;
-        content: string;
-        score: number;
-        thumbnail: string;
-    };
-    type RankingRequest = {
-        query: string;
-        searchResults: Result[];
-    };
+    let optimizedQueryResponse: SearchResponse | undefined = undefined;
     let queryResponse: SearchResponse | undefined = undefined;
     let priorQueryResponse: SearchResponse | undefined = undefined;
+    let queryPage = 1;
+    let optimizedQueryPage = 1;
+    async function loadMoreResults(listType: string) {
+        if (listType === "ai-optimized") {
+        } else if (listType === "default") {
+        }
+    }
+    /*
+
+    page number uses "pageno" as the query param 
+    with a default value of 1
+
+    */
 
     function buildQueryURL(query: string) {
         const processedQuery = encodeURIComponent(query);
@@ -31,28 +29,47 @@
         if (selectedNewsCategory !== "") {
             newsCategoryParam = `categories=${selectedNewsCategory}`;
         }
-        const querySegment = `search?query=${processedQuery}&${newsCategoryParam}`;
+        const pageNumberParam = `page_number=${useOptimizedQueryResults ? optimizedQueryPage : queryPage}`;
+        const queryParams = [newsCategoryParam, pageNumberParam]
+            .filter((p) => p !== "")
+            .join("&");
+        const querySegment = `search?query=${processedQuery}&${queryParams}`;
         return BACKEND_URL + querySegment;
+    }
+    function buildQueryRequestBody(query: string) {
+        return {
+            categories: selectedNewsCategory,
+            pageno: useOptimizedQueryResults ? optimizedQueryPage : queryPage,
+            q: query,
+            format: "json",
+        };
     }
 
     async function getAiOptimizedResults(originalQuery: string) {
-        const res = await fetch(BACKEND_URL + "smart-search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                query: originalQuery,
-            }),
-        });
-        const json: SearchResponse = await res.json();
-        console.log("got optimized query result: ", json);
-        optimizedQueryResult = json;
+        try {
+            const res = await fetch(BACKEND_URL + "smart-search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    query: originalQuery,
+                }),
+            });
+            const json: SearchResponse = await res.json();
+            console.log("got optimized query result: ", json);
+            optimizedQueryResponse = json;
+            optimizedQueryPage++;
+        } catch {
+            console.log(
+                "Error when fetching/processing optimized query results",
+            );
+        }
     }
 
     async function toggleUseAiOptimizedResults(e: Event) {
         e.preventDefault();
         if (useOptimizedQueryResults === false && query !== "") {
             useOptimizedQueryResults = true;
-            if (optimizedQueryResult === undefined) {
+            if (optimizedQueryResponse === undefined) {
                 getAiOptimizedResults(query);
             }
         } else {
@@ -70,13 +87,24 @@
             }
             queryResponse = undefined;
             // Trigger actual search logic here
-            const queryURL = buildQueryURL(query);
-            const results = await fetch(queryURL);
-            const json = await results.json();
-            console.log("retrieved web result: ", results);
-            console.log("converted json: ", json);
-            queryResponse = { ...json };
-            useOptimizedQueryResults = false;
+            try {
+                //const queryURL = buildQueryURL(query);
+                const body = buildQueryRequestBody(query);
+                console.log("prepared body: ", body);
+                const results = await fetch(BACKEND_URL + "search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+                const json = await results.json();
+                console.log("retrieved web result: ", results);
+                console.log("converted json: ", json);
+                queryResponse = { ...json };
+                useOptimizedQueryResults = false;
+                optimizedQueryResponse = undefined;
+            } catch {
+                console.log("Encountered an error when attempting a search");
+            }
         }
     }
 
@@ -137,13 +165,13 @@
                 {query}
                 results={queryResponse.results}
             />
-        {:else if useOptimizedQueryResults && optimizedQueryResult !== undefined}
+        {:else if useOptimizedQueryResults && optimizedQueryResponse !== undefined}
             <h2>Optimized Query Results</h2>
-            <h3>Optimized Query: {optimizedQueryResult.query}</h3>
+            <h3>Optimized Query: {optimizedQueryResponse.query}</h3>
             <SearchResultList
                 {BACKEND_URL}
-                query={optimizedQueryResult.query}
-                results={optimizedQueryResult.results}
+                query={optimizedQueryResponse.query}
+                results={optimizedQueryResponse.results}
             />
         {:else if priorQueryResponse !== undefined}
             <SearchResultList

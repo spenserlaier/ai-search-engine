@@ -30,12 +30,13 @@
 </script>
 
 {#if result.img_src === ""}
+    <!--  if img_src is empty, then we're probably dealing with a regular/text result-->
     <article class="search-result">
         <div class="image-wrapper">
             {#if imageVisible}
                 <img
                     class="thumbnail"
-                    src={result.thumbnail}
+                    src={result.thumbnail || result.img_src}
                     alt="thumbnail"
                     on:error={handleError}
                 />
@@ -66,6 +67,7 @@
         </div>
     </article>
 {:else if imageVisible}
+    <!-- if image is visible and img_src isn't empty, then we're dealing with an image result-->
     <div class="image-search-result">
         <img
             class="image-result"
@@ -75,7 +77,9 @@
         />
         <div class="image-information">
             <a href={result.url} rel="noopener noreferrer"> {result.title}</a>
-            <small> {result.parsed_url[1]}</small>
+            {#if result.parsed_url}
+                <small> {result.parsed_url[1]}</small>
+            {/if}
         </div>
     </div>
 {/if}
@@ -86,7 +90,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: center;
+        justify-content: left;
         flex-wrap: wrap;
         max-width: 80%;
         min-width: 80%;
@@ -133,7 +137,6 @@
         justify-content: center;
     }
     .result-info {
-        /*max-width: 80%;*/
         max-width: calc(100% - 20vw); /* ensures alignment */
         text-align: left;
     }

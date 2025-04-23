@@ -4,6 +4,7 @@
     export let BACKEND_URL: string;
     export let query: string;
     export let results: Result[];
+    export let updateResultsCallback: () => undefined;
     let localResults = results;
     let awaitingRerank = false;
     async function rerankResults(query: string, results: Result[]) {
@@ -19,6 +20,7 @@
         const json = await res.json();
         console.log("retrieved reranked results. printing...");
         console.log(json);
+        localResults = [];
         localResults = [...json];
         awaitingRerank = false;
     }
@@ -39,6 +41,7 @@
             <SearchResult {result} {BACKEND_URL} {query} />
         {/each}
     </div>
+    <button on:click={updateResultsCallback}>Load More Results</button>
 </div>
 
 <style>
