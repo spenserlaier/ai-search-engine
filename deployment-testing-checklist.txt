@@ -1,0 +1,13 @@
+1	Create Pi-hole Local DNS Entry	Go to Local DNS > DNS Records and map your-custom-domain.local -> [your server's LAN IP].
+2	Make Sure All Devices Use Pi-hole	Set Pi-hole as DNS server in your router DHCP settings or manually on devices.
+3	Run Docker Compose	docker-compose up -d to bring up frontend, backend, (optionally SearXNG).
+4	Configure Frontend URLs	Point the frontend (env vars/config) to use internal container names (e.g., http://ai-backend:5000).
+5	Test Locally	On any network device, visit http://your-custom-domain.local. It should route through Pi-hole DNS to your frontend.
+6 (optional)	TLS (Self-signed)	If you eventually want HTTPS (optional), you can generate a local CA and install it on your devices.
+
+
+The your-custom-domain.local must point to your physical server’s LAN IP, not 127.0.0.1, since 127.0.0.1 would resolve to each individual client.
+
+Inside Docker, containers talk over the internal network using service names (like ai-backend).
+
+If you want even tighter security, you can expose only the frontend to the LAN (ports), and leave backend purely internal.

@@ -1,0 +1,84 @@
+#version: "3.8"
+
+networks:
+    internal:
+        driver: bridge
+
+services:
+    searxng:
+        image: searxng/searxng:latest
+        container_name: searxng
+        restart: unless-stopped
+        ports:
+            - "8081:8080" # Expose to LAN if needed
+        volumes:
+            - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+        networks:
+            - internal
+
+    ollama:
+        build:
+            context: ./ollama
+            args:
+                MODEL_NAME: ${OLLAMA_MODEL}
+        image: ollama/ollama:latest
+        container_name: ollama
+        restart: unless-stopped
+        ports:
+            - "11434:11434" # Default Ollama API port
+        environment:
+            - OLLAMA_NUM_PARALLEL=4
+            - OLLAMA_MAX_LOADED_MODELS=2
+            - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+        healthcheck:
+            test: "ollama --version && ollama ps || exit 1"
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        networks:
+            - internal
+        volumes:
+            #- ollama_data:/root/.ollama
+            - ollama-models:/usr/share/ollama/.ollama/models
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: 1
+                          capabilities: [gpu]
+
+    backend:
+        build: ./backend
+        container_name: ai-backend
+        restart: unless-stopped
+        networks:
+            - internal
+        environment:
+            - SEARXNG_URL=http://searxng:8080
+            - OLLAMA_URL=http://ollama:11434
+            - OLLAMA_MODEL=${OLLAMA_MODEL}
+            - FRONTEND_URL=http://ai-frontend:80
+
+        ports:
+            - "5000:5000" # Optional if you want LAN access
+
+    frontend:
+        image: nginx:alpine
+        container_name: ai-frontend
+        restart: unless-stopped
+        volumes:
+            - ./frontend/dist:/usr/share/nginx/html
+            - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
+            - ./frontend/docker-entrypoint.sh:/docker-entrypoint.sh
+        networks:
+            - internal
+        ports:
+            - "800:80"
+        environment:
+            - VITE_BACKEND_URL=/api/
+        entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+
+volumes:
+    ollama-models:

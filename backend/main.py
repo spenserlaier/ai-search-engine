@@ -18,9 +18,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # CORS config
+origins = [
+    #"http://192.168.1.25:800",   # home network IP
+    #"http://myai.local:800",     # optional .local domain if using mDNS
+    "http://localhost:800",      # for development from same machine
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

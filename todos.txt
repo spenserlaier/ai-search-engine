@@ -8,3 +8,11 @@
   when trying to deal with things like pagination
 
 
+ci/cd:
+
+- when pushing a commit: (i.e. git hooks)
+- update requirements.txt (necessary for backend)
+- rebuild backend container (?)
+- update frontend static site files in place
+
+
