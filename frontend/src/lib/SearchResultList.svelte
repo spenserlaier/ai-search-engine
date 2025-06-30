@@ -4,8 +4,10 @@
     export let BACKEND_URL: string;
     export let query: string;
     export let results: Result[];
-    export let updateResultsCallback: () => Promise<void>;
-    export let updateListCallback: (results: Result[]) => void;
+    //export let updateResultsCallback: () => Promise<void>;
+    //export let updateListCallback: (results: Result[]) => void;
+    export let updateResultsCallback: () => Promise<void> = async () => {};
+    export let updateListCallback: (r: Result[]) => void;
     //let localResults = results;
     let awaitingRerank = false;
     async function rerankResults(query: string, results: Result[]) {

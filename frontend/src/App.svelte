@@ -248,6 +248,7 @@
                 {query}
                 results={queryResponse.results}
                 updateResultsCallback={async () => loadMoreResults("default")}
+                updateListCallback={rerankResultsCallback("default")}
             />
         {:else if useOptimizedQueryResults && optimizedQueryResponse !== undefined}
             <h2>Optimized Query Results</h2>

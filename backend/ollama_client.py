@@ -72,7 +72,7 @@ async def validate_analysis(analysis: str):
     # TODO: consider re-prompting based on excessively long analyses to possibly
     # produce shorter results from a longer analysis
     print("validating analysis. recieved input had word length of: ", len(analysis.split()))
-    if len(analysis.split()) >= 100:
+    if len(analysis.split()) >= 100 or len(analysis.strip()) == 0:
         return False
     return True
 
